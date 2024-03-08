@@ -1,17 +1,21 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import com.github.bytecat.ByteCat
-import com.github.bytecat.IDebugger
+import com.github.bytecat.contact.Cat
 import com.github.bytecat.contact.CatBook
-import com.github.bytecat.contact.Contact
+import com.github.bytecat.utils.IDebugger
+import java.awt.event.WindowEvent
+import java.awt.event.WindowFocusListener
 
 private val debuggerDefault by lazy {
     object : IDebugger {
@@ -23,12 +27,12 @@ private val debuggerDefault by lazy {
             println("onBroadcastReceived fromIp=$fromIp text=${String(data)}")
         }
 
-        override fun onContactAdd(contact: Contact) {
-            println("onContactAdd ${contact.id}")
+        override fun onContactAdd(cat: Cat) {
+            println("onContactAdd ${cat.name}")
         }
 
-        override fun onContactRemove(contact: Contact) {
-            println("onContactRemove ${contact.id}")
+        override fun onContactRemove(cat: Cat) {
+            println("onContactRemove ${cat.name}")
         }
 
         override fun onMessageReady() {
@@ -40,26 +44,40 @@ private val debuggerDefault by lazy {
         }
     }
 }
+
+private val catCallback by lazy {
+    object : ByteCat.Callback {
+        override fun onCatMessage(cat: Cat, text: String) {
+            println("Receive message from ${cat.name}: $text")
+        }
+    }
+}
+
 private val byteCat by lazy {
     object : ByteCat() {
         override val debugger: IDebugger
             get() = debuggerDefault
+    }.apply {
+        setCallback(catCallback)
     }
 }
 
 private val catBookCallback = object : CatBook.Callback {
-    override fun onContactAdd(contact: Contact) {
-        if (cats.contains(contact)) {
+    override fun onContactAdd(cat: Cat) {
+        if (cats.contains(cat)) {
             return
         }
-        cats.add(contact)
+        cats.add(cat)
     }
 
-    override fun onContactRemove(contact: Contact) {
-        cats.remove(contact)
+    override fun onContactRemove(cat: Cat) {
+        cats.remove(cat)
+    }
+
+    override fun onContactUpdate(cat: Cat) {
     }
 }
-private val cats = mutableStateListOf<Contact>()
+private val cats = mutableStateListOf<Cat>()
 
 @Composable
 @Preview
@@ -74,13 +92,34 @@ fun App() {
 }
 
 fun main() = application {
+
+    val windowFocusListener = object : WindowFocusListener {
+        override fun windowGainedFocus(e: WindowEvent?) {
+            println("windowGainedFocus")
+            byteCat.refresh()
+        }
+
+        override fun windowLostFocus(e: WindowEvent?) {
+            println("windowLostFocus")
+        }
+    }
+
     byteCat.catBook.registerCallback(catBookCallback)
     byteCat.startup()
-    Window(title = "ByteCat Desktop", onCloseRequest = {
-        byteCat.catBook.unregisterCallback(catBookCallback)
-        byteCat.shutdown()
-        exitApplication()
-    }) {
+    Window(
+        title = "ByteCat Desktop",
+        resizable = false,
+        state = rememberWindowState(
+            width = 320.dp, height = 480.dp,
+            position = WindowPosition(Alignment.Center)
+        ),
+        onCloseRequest = {
+            byteCat.catBook.unregisterCallback(catBookCallback)
+            byteCat.shutdown()
+            exitApplication()
+        }
+    ) {
+        this.window.addWindowFocusListener(windowFocusListener)
         App()
     }
 }
