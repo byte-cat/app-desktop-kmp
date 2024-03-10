@@ -1,19 +1,20 @@
+package com.github.bytecat
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.Image
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.github.bytecat.ByteCat
 import com.github.bytecat.contact.Cat
 import com.github.bytecat.contact.CatBook
 import com.github.bytecat.utils.IDebugger
+import com.github.bytecat.vm.CatBookViewModel
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 
@@ -47,6 +48,9 @@ private val debuggerDefault by lazy {
 
 private val catCallback by lazy {
     object : ByteCat.Callback {
+        override fun onReady(myCat: Cat) {
+            catBookVM.myCat.value = myCat
+        }
         override fun onCatMessage(cat: Cat, text: String) {
             println("Receive message from ${cat.name}: $text")
         }
@@ -64,30 +68,32 @@ private val byteCat by lazy {
 
 private val catBookCallback = object : CatBook.Callback {
     override fun onContactAdd(cat: Cat) {
-        if (cats.contains(cat)) {
-            return
-        }
-        cats.add(cat)
+        catBookVM.addCat(cat)
     }
 
     override fun onContactRemove(cat: Cat) {
-        cats.remove(cat)
+        catBookVM.removeCat(cat)
     }
 
     override fun onContactUpdate(cat: Cat) {
     }
 }
-private val cats = mutableStateListOf<Cat>()
+
+private val catBookVM = CatBookViewModel()
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        LazyColumn {
-            items(cats) {
-                Text(it.name)
-            }
+    MaterialTheme(
+        colors = themeColors()
+    ) {
+        MainView(catBookVM) {
+
         }
+        /*Image(
+            painter = painterResource("drawable/ic_apple.xml"),
+            contentDescription = ""
+        )*/
     }
 }
 
