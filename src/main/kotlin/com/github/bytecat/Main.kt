@@ -2,19 +2,28 @@ package com.github.bytecat
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import com.github.bytecat.contact.Cat
 import com.github.bytecat.contact.CatBook
+import com.github.bytecat.resource.R
 import com.github.bytecat.utils.IDebugger
-import com.github.bytecat.vm.CatBookViewModel
+import com.github.bytecat.vm.CatBookVM
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 
@@ -51,9 +60,6 @@ private val catCallback by lazy {
         override fun onReady(myCat: Cat) {
             catBookVM.myCat.value = myCat
         }
-        override fun onCatMessage(cat: Cat, text: String) {
-            println("Receive message from ${cat.name}: $text")
-        }
     }
 }
 
@@ -79,7 +85,11 @@ private val catBookCallback = object : CatBook.Callback {
     }
 }
 
-private val catBookVM = CatBookViewModel()
+private val catBookVM = CatBookVM()
+
+private val chosenCat = mutableStateOf<Cat?>(null)
+
+private val pendingMsg = mutableStateOf("")
 
 @Composable
 @Preview
@@ -87,17 +97,45 @@ fun App() {
     MaterialTheme(
         colors = themeColors()
     ) {
-        MainView(catBookVM) {
-
+        if (chosenCat.value != null) {
+            Dialog(onDismissRequest = {
+                chosenCat.value = null
+            }) {
+                Column (
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                        .background(color = myCatTheme().myCatBackgroundColor, shape = RoundedCornerShape(16.dp)),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    TextField(
+                        pendingMsg.value,
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        onValueChange = {
+                            pendingMsg.value = it
+                        }
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.ic_send),
+                        modifier = Modifier.size(40.dp)
+                            .padding(8.dp)
+                            .clickable {
+                                byteCat.sendMessage(chosenCat.value!!, pendingMsg.value)
+                                pendingMsg.value = ""
+                                chosenCat.value = null
+                            },
+                        contentDescription = ""
+                    )
+                }
+            }
         }
-        /*Image(
-            painter = painterResource("drawable/ic_apple.xml"),
-            contentDescription = ""
-        )*/
+        MainView(catBookVM) {
+            chosenCat.value = it
+        }
     }
 }
 
 fun main() = application {
+
+    val icon = painterResource(resourcePath = R.drawable.ic_launcher)
 
     val windowFocusListener = object : WindowFocusListener {
         override fun windowGainedFocus(e: WindowEvent?) {
@@ -113,6 +151,7 @@ fun main() = application {
     byteCat.catBook.registerCallback(catBookCallback)
     byteCat.startup()
     Window(
+        icon = icon,
         title = "ByteCat Desktop",
         resizable = false,
         state = rememberWindowState(

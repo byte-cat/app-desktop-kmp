@@ -21,7 +21,7 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
-    implementation("com.github.byte-cat:basic-kt:pre-0.0.17")
+    implementation("com.github.byte-cat:basic-kt:pre-0.0.24")
 }
 
 compose.desktop {
@@ -29,6 +29,9 @@ compose.desktop {
         mainClass = "MainKt"
 
         nativeDistributions {
+            macOS {
+                iconFile.set(project.file("app-icon.icns"))
+            }
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ByteCat"
             packageVersion = "1.0.0"

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,8 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,10 +27,10 @@ import androidx.compose.ui.unit.sp
 import com.github.bytecat.contact.Cat
 import com.github.bytecat.ext.iconRes
 import com.github.bytecat.resource.R
-import com.github.bytecat.vm.CatBookViewModel
+import com.github.bytecat.vm.CatBookVM
 
 @Composable
-fun MainView(catBookVM: CatBookViewModel, onItemClick: (cat: Cat) -> Unit) {
+fun MainView(catBookVM: CatBookVM, onItemClick: (cat: Cat) -> Unit) {
     val myCat = catBookVM.myCat.value
     Column {
         if (myCat != null) {
@@ -126,13 +127,15 @@ fun MyCatView(myCat: Cat) {
         Text(
             text = myCat.name,
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            color = myCatTheme().myCatNameColor
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = myCat.ipAddress,
+            text = myCat.ip,
             fontWeight = FontWeight.Light,
-            fontSize = 12.sp
+            fontSize = 12.sp,
+            color = myCatTheme().myCatNameColor
         )
     }
 }
@@ -146,9 +149,7 @@ fun CatItemView(cat: Cat, onClick: (cat: Cat) -> Unit) {
             .height(56.dp)
             .padding(horizontal = 16.dp)
             .clip(shape = roundedCornerShape)
-            .clickable {
-                onClick.invoke(cat)
-            }
+            .clickable { onClick.invoke(cat) }
             .background(color = myCatTheme().itemBackgroundColor)
             .border(
                 width = 0.5.dp,
@@ -173,14 +174,16 @@ fun CatItemView(cat: Cat, onClick: (cat: Cat) -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = myCatTheme().myCatNameColor
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = cat.ipAddress,
+                text = cat.ip,
                 modifier = Modifier.fillMaxWidth(),
                 fontWeight = FontWeight.Light,
-                fontSize = 10.sp
+                fontSize = 10.sp,
+                color = myCatTheme().myCatNameColor
             )
         }
         Spacer(Modifier.width(8.dp))

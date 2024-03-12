@@ -4,7 +4,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.github.bytecat.contact.Cat
 
-class CatBookViewModel {
+class CatBookVM {
+
     val myCat = mutableStateOf<Cat?>(null)
     val cats = mutableStateListOf<Cat>()
 
