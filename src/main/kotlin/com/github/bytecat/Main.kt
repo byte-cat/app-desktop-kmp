@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.github.bytecat.contact.Cat
 import com.github.bytecat.contact.CatBook
+import com.github.bytecat.message.Message
+import com.github.bytecat.message.MessageBox
+import com.github.bytecat.protocol.data.FileRequestData
 import com.github.bytecat.resource.R
 import com.github.bytecat.utils.IDebugger
 import com.github.bytecat.vm.CatBookVM
@@ -72,13 +75,26 @@ private val byteCat by lazy {
     }
 }
 
+private val messageCallback = object : MessageBox.Callback {
+    override fun onMessageReceived(cat: Cat, message: Message<*>) {
+        println("onMessageReceived message=$message")
+        if (message.data is FileRequestData) {
+            val fileReqData = message.data as FileRequestData
+
+            byteCat.acceptFileRequest(cat, fileReqData)
+        }
+    }
+}
+
 private val catBookCallback = object : CatBook.Callback {
     override fun onContactAdd(cat: Cat) {
         catBookVM.addCat(cat)
+        MessageBox.obtain(cat).registerCallback(messageCallback)
     }
 
     override fun onContactRemove(cat: Cat) {
         catBookVM.removeCat(cat)
+        MessageBox.obtain(cat).unregisterCallback(messageCallback)
     }
 
     override fun onContactUpdate(cat: Cat) {
