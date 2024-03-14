@@ -29,6 +29,7 @@ import com.github.bytecat.utils.IDebugger
 import com.github.bytecat.vm.CatBookVM
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
+import java.io.File
 
 private val debuggerDefault by lazy {
     object : IDebugger {
@@ -71,6 +72,10 @@ private val byteCat by lazy {
         override val debugger: IDebugger
             get() = debuggerDefault
     }.apply {
+        outputDir = File("./build/received")
+        if (!outputDir.exists()) {
+            outputDir.mkdirs()
+        }
         setCallback(catCallback)
     }
 }
@@ -134,7 +139,7 @@ fun App() {
                         modifier = Modifier.size(40.dp)
                             .padding(8.dp)
                             .clickable {
-                                byteCat.sendMessage(chosenCat.value!!, pendingMsg.value)
+                                byteCat.sendText(chosenCat.value!!, pendingMsg.value)
                                 pendingMsg.value = ""
                                 chosenCat.value = null
                             },
